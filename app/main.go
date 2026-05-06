@@ -42,7 +42,8 @@ func main() {
 			fmt.Println(res)
 		}
 		if command == "type" {
-			fmt.Printf("%s is a shell builtin\n", text[1])
+			res := text[1]
+			fmt.Printf("%s is a shell builtin\n", res)
 		}
 
 	}
