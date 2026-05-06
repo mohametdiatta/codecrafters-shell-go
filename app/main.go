@@ -18,7 +18,7 @@ func main() {
 		result := strings.Split(input, " ")
 		command := result[0]
 		text := result[1:]
-		fmt.Print("command %s\n", command)
+		fmt.Printf("command %s\n", command)
 		if len(result) == 0 {
 			if input == "exit" {
 				break
