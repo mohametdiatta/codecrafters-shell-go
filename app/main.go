@@ -50,6 +50,9 @@ func main() {
 		default:
 			_, err := exec.LookPath(command)
 			if err != nil {
+				fmt.Printf("%s: command not found\n", command)
+			}
+			if err == nil {
 				out, err := exec.Command(command, args...).Output()
 				if err == nil {
 					fmt.Printf("\n%s\n", out)
@@ -57,7 +60,6 @@ func main() {
 				}
 			}
 
-			fmt.Printf("%s: command not found\n", command)
 		}
 	}
 }
