@@ -16,9 +16,9 @@ func main() {
 		fmt.Print("$ ")
 		fmt.Scan(&input)
 		result := strings.Split(input, " ")
-		fmt.Print(result)
 		command := result[0]
 		text := result[1:]
+		fmt.Print("command %s\n", command)
 		if len(result) == 0 {
 			if input == "exit" {
 				break
