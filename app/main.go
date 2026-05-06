@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"slices"
 	"strings"
 )
@@ -15,6 +16,7 @@ func main() {
 	// TODO: Uncomment the code below to pass the first stage
 	scanner := bufio.NewScanner(os.Stdin)
 	VALID_COMMANDS := []string{"echo", "exit", "type"}
+	BUIL_IN_COMMANDS := []string{"echo", "exit", "type"}
 	for {
 		fmt.Print("$ ")
 		// fmt.Scan(&input)
@@ -43,11 +45,16 @@ func main() {
 		}
 		if command == "type" {
 			arg := result[1]
-			existsArgs := slices.Contains(VALID_COMMANDS, arg)
+			existsArgs := slices.Contains(BUIL_IN_COMMANDS, arg)
 			if existsArgs {
 				fmt.Printf("%s is a shell builtin\n", arg)
 			} else {
-				fmt.Printf("%s: not found\n", arg)
+				path, err := exec.LookPath(arg)
+				fmt.Printf("%s: is %s\n", arg, path)
+				if err != nil {
+					fmt.Printf("%s: not found\n", arg)
+					return
+				}
 			}
 		}
 
