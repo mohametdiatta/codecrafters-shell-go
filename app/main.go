@@ -39,10 +39,15 @@ func main() {
 			}
 
 		case "cd":
-			arg := args[0]
-			err := os.Chdir(arg)
-			if err != nil {
-				fmt.Printf("cd: %s: No such file or directory\n", arg)
+			var dir = args[0]
+			if dir == "~" {
+				home, _ := os.UserHomeDir()
+				dir = home
+			} else {
+				err := os.Chdir(dir)
+				if err != nil {
+					fmt.Printf("cd: %s: No such file or directory\n", arg)
+				}
 			}
 		case "type":
 			if len(args) == 0 {
