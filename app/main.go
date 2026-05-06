@@ -16,6 +16,7 @@ func main() {
 		fmt.Print("$ ")
 		fmt.Scan(&input)
 		result := strings.Split(input, " ")
+		fmt.Print(result)
 		command := result[0]
 		text := result[1:]
 		if len(result) == 0 {
