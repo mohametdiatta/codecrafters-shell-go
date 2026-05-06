@@ -41,9 +41,9 @@ func main() {
 			res := strings.Join(text, " ")
 			fmt.Println(res)
 		}
-		arg := result[1]
-		existsArgs := slices.Contains(VALID_COMMANDS, arg)
 		if command == "type" {
+			arg := result[1]
+			existsArgs := slices.Contains(VALID_COMMANDS, arg)
 			if existsArgs {
 				fmt.Printf("%s is a shell builtin\n", arg)
 			} else {
