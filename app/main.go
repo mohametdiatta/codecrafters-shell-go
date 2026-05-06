@@ -31,7 +31,7 @@ func main() {
 		if !exists {
 			fmt.Printf("%s: command not found\n", input)
 		}
-		if len(result) == 0 {
+		if len(result) == 1 {
 			if command == "exit" {
 				break
 			}
