@@ -25,7 +25,8 @@ func main() {
 		}
 
 		if command == "echo" {
-			fmt.Println(strings.Join(text, " "))
+			res := strings.Join(text, " ")
+			fmt.Println(res)
 		}
 		fmt.Printf("%s: command not found\n", input)
 	}
