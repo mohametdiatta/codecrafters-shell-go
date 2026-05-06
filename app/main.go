@@ -14,7 +14,7 @@ var _ = fmt.Print
 func main() {
 	// TODO: Uncomment the code below to pass the first stage
 	scanner := bufio.NewScanner(os.Stdin)
-	VALID_COMMANDS := []string{"echo", "exit"}
+	VALID_COMMANDS := []string{"echo", "exit", "type"}
 	for {
 		fmt.Print("$ ")
 		// fmt.Scan(&input)
@@ -40,6 +40,10 @@ func main() {
 		if command == "echo" {
 			res := strings.Join(text, " ")
 			fmt.Println(res)
+		}
+		if command == "type" {
+			fmt.Printf("%s is a shell builtin\n", text)
+
 		}
 
 	}
