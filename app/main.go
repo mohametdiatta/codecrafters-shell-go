@@ -9,56 +9,55 @@ import (
 	"strings"
 )
 
-// Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
-var _ = fmt.Print
+var builtins = []string{"echo", "exit", "type"}
 
 func main() {
-	// TODO: Uncomment the code below to pass the first stage
 	scanner := bufio.NewScanner(os.Stdin)
-	VALID_COMMANDS := []string{"echo", "exit", "type"}
-	BUIL_IN_COMMANDS := []string{"echo", "exit", "type"}
+
 	for {
 		fmt.Print("$ ")
-		// fmt.Scan(&input)
 		scanner.Scan()
-		input := scanner.Text()
-		if len(input) == 0 || input == "" {
-			fmt.Println("command not found")
-		}
-		result := strings.Split(input, " ")
-		command := result[0]
-		text := result[1:]
+		input := strings.TrimSpace(scanner.Text())
 
-		exists := slices.Contains(VALID_COMMANDS, command)
-		if !exists {
-			fmt.Printf("%s: command not found\n", input)
+		if input == "" {
+			continue
 		}
-		if len(result) == 1 {
-			if command == "exit" {
-				break
+
+		parts := strings.Fields(input) // handles multiple spaces better than Split
+		command, args := parts[0], parts[1:]
+
+		switch command {
+		case "exit":
+			return
+
+		case "echo":
+			fmt.Println(strings.Join(args, " "))
+
+		case "type":
+			if len(args) == 0 {
+				fmt.Println("type: missing argument")
+				continue
 			}
-		}
-
-		if command == "echo" {
-			res := strings.Join(text, " ")
-			fmt.Println(res)
-		}
-		if command == "type" {
-			arg := result[1]
-			existsArgs := slices.Contains(BUIL_IN_COMMANDS, arg)
-			if existsArgs {
+			arg := args[0]
+			if slices.Contains(builtins, arg) {
 				fmt.Printf("%s is a shell builtin\n", arg)
+			} else if path, err := exec.LookPath(arg); err == nil {
+				fmt.Printf("%s is %s\n", arg, path)
 			} else {
-				path, err := exec.LookPath(arg)
-				if err != nil {
-					fmt.Printf("%s: not found\n", arg)
-				}
-				if path != "" {
-					fmt.Printf("%s is %s\n", arg, path)
-				}
-
+				fmt.Printf("%s: not found\n", arg)
 			}
-		}
 
+		default:
+			_, err := exec.LookPath(command)
+			if err != nil {
+				out, err := exec.Command(command, args...).Output()
+				if err == nil {
+					fmt.Printf("\n%s\n", out)
+
+				}
+			}
+
+			fmt.Printf("%s: command not found\n", command)
+		}
 	}
 }
