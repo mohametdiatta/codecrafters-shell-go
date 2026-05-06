@@ -50,11 +50,12 @@ func main() {
 				fmt.Printf("%s is a shell builtin\n", arg)
 			} else {
 				path, err := exec.LookPath(arg)
-				fmt.Printf("%s is %s\n", arg, path)
 				if err != nil {
 					fmt.Printf("%s: not found\n", arg)
 					return
 				}
+				fmt.Printf("%s is %s\n", arg, path)
+
 			}
 		}
 
