@@ -20,11 +20,19 @@ func main() {
 		// fmt.Scan(&input)
 		scanner.Scan()
 		input := scanner.Text()
+		if len(input) == 0 || input == "" {
+			fmt.Println("command not found")
+		}
 		result := strings.Split(input, " ")
 		command := result[0]
 		text := result[1:]
+
+		exists := slices.Contains(VALID_COMMANDS, command)
+		if !exists {
+			fmt.Printf("%s: command not found\n", input)
+		}
 		if len(result) == 0 {
-			if input == "exit" {
+			if command == "exit" {
 				break
 			}
 		}
@@ -33,9 +41,6 @@ func main() {
 			res := strings.Join(text, " ")
 			fmt.Println(res)
 		}
-		exists := slices.Contains(VALID_COMMANDS, command)
-		if exists {
-			fmt.Printf("%s: command not found\n", input)
-		}
+
 	}
 }
