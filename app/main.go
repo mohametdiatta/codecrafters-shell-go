@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var builtins = []string{"echo", "exit", "type"}
+var builtins = []string{"echo", "exit", "type", "pwd"}
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
