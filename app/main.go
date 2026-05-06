@@ -32,7 +32,11 @@ func main() {
 
 		case "echo":
 			fmt.Println(strings.Join(args, " "))
-
+		case "pwd":
+			path, err := os.Getwd()
+			if err == nil {
+				fmt.Println(path)
+			}
 		case "type":
 			if len(args) == 0 {
 				fmt.Println("type: missing argument")
