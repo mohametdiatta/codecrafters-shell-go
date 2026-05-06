@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -10,15 +12,17 @@ var _ = fmt.Print
 
 func main() {
 	// TODO: Uncomment the code below to pass the first stage
+	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
-		var input string
 		fmt.Print("$ ")
-		fmt.Scan(&input)
+		// fmt.Scan(&input)
+		scanner.Scan()
+		input := scanner.Text()
+
 		result := strings.Split(input, " ")
 		command := result[0]
 		text := result[1:]
-		fmt.Printf("command %s\n", command)
 		if len(result) == 0 {
 			if input == "exit" {
 				break
