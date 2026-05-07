@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"slices"
 	"strings"
+
+	"github.com/google/shlex"
 )
 
 var builtins = []string{"echo", "exit", "type", "pwd", "cd"}
@@ -23,7 +25,7 @@ func main() {
 			continue
 		}
 
-		parts := strings.Fields(input) // handles multiple spaces better than Split
+		parts, _ := shlex.Split(input) // handles multiple spaces better than Split
 		command, args := parts[0], parts[1:]
 
 		switch command {
@@ -31,7 +33,9 @@ func main() {
 			return
 
 		case "echo":
+			// text := shlex.Split(args)
 			fmt.Println(strings.Join(args, " "))
+
 		case "pwd":
 			path, err := os.Getwd()
 			if err == nil {
@@ -40,7 +44,7 @@ func main() {
 
 		case "cd":
 			var dir = args[0]
-			if dir == "~" {
+			if dir == "~" || dir == "" {
 				home, _ := os.UserHomeDir()
 				dir = home
 			}
