@@ -12,6 +12,7 @@ import (
 )
 
 var builtins = []string{"echo", "exit", "type", "pwd", "cd"}
+var operators = []string{">", "1>"}
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
@@ -25,7 +26,7 @@ func main() {
 			continue
 		}
 
-		parts, _ := shlex.Split(input) // handles multiple spaces better than Split
+		parts, _ := shlex.Split(input)
 		command, args := parts[0], parts[1:]
 
 		switch command {
@@ -33,8 +34,18 @@ func main() {
 			return
 
 		case "echo":
-			// text := shlex.Split(args)
-			fmt.Println(strings.Join(args, " "))
+			operator := args[1]
+			if slices.Contains(operators, operator) {
+				fileName := args[2]
+				fileContent := []byte(args[0])
+				err := os.WriteFile(fileName, fileContent, 0644)
+				if err != nil {
+					fmt.Println(err)
+				}
+			} else {
+
+				fmt.Println(strings.Join(args, " "))
+			}
 
 		case "pwd":
 			path, err := os.Getwd()
