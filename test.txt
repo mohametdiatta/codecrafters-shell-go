@@ -1,0 +1,2 @@
+ls: 1>: No such file or directory
+ls: test.txt: No such file or directory

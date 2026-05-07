@@ -81,13 +81,17 @@ func main() {
 			if path, err := exec.LookPath(command); err == nil {
 				cmd := exec.Command(path, args...)
 				cmd.Args[0] = command
-				out, _ := cmd.CombinedOutput()
+				out, err := cmd.CombinedOutput()
+				if err != nil {
+					fmt.Println(err.Error())
+					continue
+				}
 				if slices.Contains(args, ">") || slices.Contains(args, "1>") {
 					fileName := args[len(args)-1]
 					fileContent := []byte(out)
 					err := os.WriteFile(fileName, fileContent, 0644)
 					if err != nil {
-						fmt.Println(err)
+						fmt.Println(err.Error())
 					}
 				} else {
 					fmt.Print(string(out))
