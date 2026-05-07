@@ -43,7 +43,6 @@ func main() {
 					fmt.Println(err)
 				}
 			} else {
-
 				fmt.Println(strings.Join(args, " "))
 			}
 
@@ -83,7 +82,16 @@ func main() {
 				cmd := exec.Command(path, args...)
 				cmd.Args[0] = command
 				out, _ := cmd.CombinedOutput()
-				fmt.Print(string(out))
+				if slices.Contains(args, ">") || slices.Contains(args, "1>") {
+					fileName := args[len(args)-1]
+					fileContent := []byte(out)
+					err := os.WriteFile(fileName, fileContent, 0644)
+					if err != nil {
+						fmt.Println(err)
+					}
+				} else {
+					fmt.Print(string(out))
+				}
 			} else {
 				fmt.Printf("%s: command not found\n", command)
 			}
