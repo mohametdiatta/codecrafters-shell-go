@@ -83,8 +83,8 @@ func main() {
 				cmd.Args[0] = command
 				out, err := cmd.CombinedOutput()
 				if err != nil {
-					fmt.Println(err.Error())
 					continue
+					// fmt.Println(err.Error())
 				}
 				if slices.Contains(args, ">") || slices.Contains(args, "1>") {
 					fileName := args[len(args)-1]
