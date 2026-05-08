@@ -99,14 +99,25 @@ func evalCommand(args []string) {
 		stdout = outputFile
 		args = args[:len(args)-2]
 	}
+	var stderr *os.File = os.Stderr
+
+	if len(args) > 2 && args[len(args)-2] == "2>" {
+		outputFile, err := os.Create(args[len(args)-1])
+		if err != nil {
+			stdout = *os.File(err)
+		}
+		defer outputFile.Close()
+		stdout = outputFile
+		args = args[:len(args)-2]
+	}
 
 	if cmd, builtin := builtins[args[0]]; builtin {
-		cmd.Stderr = os.Stderr
+		cmd.Stderr = stderr
 		cmd.Stdout = stdout
 		cmd.Start(args)
 	} else if _, err := exec.LookPath(args[0]); nil == err {
 		cmd := exec.Command(args[0], args[1:]...)
-		cmd.Stderr = os.Stderr
+		cmd.Stderr = stderr
 		cmd.Stdout = stdout
 		cmd.Stdin = os.Stdin
 		cmd.Start()
