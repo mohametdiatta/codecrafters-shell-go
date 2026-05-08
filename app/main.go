@@ -28,7 +28,16 @@ func main() {
 
 		parts, _ := shlex.Split(input)
 		command, args := parts[0], parts[1:]
-
+		var stdout *os.File = os.Stdout
+		if len(args) > 2 && (args[len(args)-2] == ">" || args[len(args)-2] == "1>") {
+			outputFile, err := os.Create(args[len(args)-1])
+			if err != nil {
+				panic(err)
+			}
+			defer outputFile.Close()
+			stdout = outputFile
+			args = args[:len(args)-2]
+		}
 		switch command {
 		case "exit":
 			return
@@ -81,6 +90,8 @@ func main() {
 			if path, err := exec.LookPath(command); err == nil {
 				cmd := exec.Command(path, args...)
 				cmd.Args[0] = command
+				cmd.Stderr = os.Stderr
+				cmd.Stdout = stdout
 				out, err := cmd.CombinedOutput()
 				if err != nil {
 					continue
