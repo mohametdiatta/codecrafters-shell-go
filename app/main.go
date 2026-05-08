@@ -110,6 +110,16 @@ func evalCommand(args []string) {
 
 		args = args[:len(args)-2]
 	}
+	if len(args) > 2 && args[len(args)-2] == ">>" {
+		outputFile, err := os.OpenFile(args[len(args)-1], os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+		stdout = outputFile
+
+		defer outputFile.Close()
+		args = args[:len(args)-2]
+	}
 
 	if cmd, builtin := builtins[args[0]]; builtin {
 		cmd.Stderr = stderr
