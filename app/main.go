@@ -2,115 +2,199 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"slices"
 	"strings"
-
-	"github.com/google/shlex"
 )
 
-var builtins = []string{"echo", "exit", "type", "pwd", "cd"}
-var operators = []string{">", "1>"}
+type Command struct {
+	Stdout io.Writer
+	Stderr io.Writer
+	exec   func(cmd Command, args []string)
+}
 
-func main() {
-	scanner := bufio.NewScanner(os.Stdin)
+func (cmd Command) Start(args []string) {
+	cmd.exec(cmd, args)
+}
 
-	for {
-		fmt.Print("$ ")
-		scanner.Scan()
-		input := strings.TrimSpace(scanner.Text())
+func handleExit(cmd Command, args []string) {
+	os.Exit(0)
+}
 
-		if input == "" {
+func handleEcho(cmd Command, args []string) {
+	fmt.Fprintln(cmd.Stdout, strings.Join(args[1:], " "))
+}
+
+func handleType(cmd Command, args []string) {
+	var _, exists = builtins[args[1]]
+	if exists {
+		fmt.Fprintf(cmd.Stdout, "%s is a shell builtin\n", args[1])
+	} else if path, err := exec.LookPath(args[1]); nil == err {
+		fmt.Fprintln(cmd.Stdout, args[1], "is", path)
+	} else {
+		fmt.Fprintf(cmd.Stdout, "%s: not found\n", args[1])
+	}
+}
+
+func handlePwd(cmd Command, args []string) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(cmd.Stderr, "error retrieving working directory: %v\n", err)
+	}
+	fmt.Fprintln(cmd.Stdout, pwd)
+}
+
+func handleCd(cmd Command, args []string) {
+	var dir string
+	if args[1] == "~" {
+		dir = os.Getenv("HOME")
+	} else {
+		dir = args[1]
+	}
+	err := os.Chdir(dir)
+	if err != nil {
+		fmt.Fprintf(cmd.Stderr, "cd: %s: No such file or directory\n", args[1])
+	}
+}
+
+var builtins map[string]Command
+
+func init() {
+	builtins = map[string]Command{
+		"exit": {exec: handleExit},
+		"echo": {exec: handleEcho},
+		"type": {exec: handleType},
+		"pwd":  {exec: handlePwd},
+		"cd":   {exec: handleCd},
+	}
+}
+
+func readCommand() []string {
+	fmt.Fprint(os.Stdout, "$ ")
+
+	cmd, _, err := bufio.NewReader(os.Stdin).ReadLine()
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error reading input:", err)
+		os.Exit(1)
+	}
+
+	args, err := Parse(string(cmd))
+
+	return args
+}
+
+func evalCommand(args []string) {
+	var stdout *os.File = os.Stdout
+	if len(args) > 2 && (args[len(args)-2] == ">" || args[len(args)-2] == "1>") {
+		outputFile, err := os.Create(args[len(args)-1])
+		if err != nil {
+			panic(err)
+		}
+		defer outputFile.Close()
+		stdout = outputFile
+		args = args[:len(args)-2]
+	}
+
+	if cmd, builtin := builtins[args[0]]; builtin {
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = stdout
+		cmd.Start(args)
+	} else if _, err := exec.LookPath(args[0]); nil == err {
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = stdout
+		cmd.Stdin = os.Stdin
+		cmd.Start()
+		cmd.Wait()
+	} else {
+		fmt.Fprintf(os.Stderr, "%s: command not found\n", args[0])
+	}
+}
+
+type argType int
+
+const (
+	argNo argType = iota
+	argSingle
+	argQuoted
+)
+
+func Parse(line string) ([]string, error) {
+	args := []string{}
+	buf := ""
+	var escaped, doubleQuoted, singleQuoted bool
+
+	got := argNo
+
+	for _, r := range line {
+		if escaped {
+			if doubleQuoted && !slices.Contains([]rune{'"', '\\', '$', '`', '\n'}, r) {
+				buf += string('\\')
+			}
+			buf += string(r)
+			escaped = false
+			got = argSingle
 			continue
 		}
 
-		parts, _ := shlex.Split(input)
-		command, args := parts[0], parts[1:]
-		var stdout *os.File = os.Stdout
-		if len(args) > 2 && (args[len(args)-2] == ">" || args[len(args)-2] == "1>") {
-			outputFile, err := os.Create(args[len(args)-1])
-			if err != nil {
-				panic(err)
+		switch r {
+		case ' ':
+			if singleQuoted || doubleQuoted {
+				buf += string(r)
+			} else if got != argNo {
+				args = append(args, buf)
+				buf = ""
+				got = argNo
 			}
-			defer outputFile.Close()
-			stdout = outputFile
-			args = args[:len(args)-2]
-		}
-		switch command {
-		case "exit":
-			return
-
-		case "echo":
-			operator := args[1]
-			if slices.Contains(operators, operator) {
-				fileName := args[2]
-				fileContent := []byte(args[0])
-				err := os.WriteFile(fileName, fileContent, 0644)
-				if err != nil {
-					fmt.Println(err)
-				}
+			continue
+		case '\\':
+			if singleQuoted {
+				buf += string(r)
 			} else {
-				fmt.Println(strings.Join(args, " "))
+				escaped = true
 			}
-
-		case "pwd":
-			path, err := os.Getwd()
-			if err == nil {
-				fmt.Println(path)
-			}
-
-		case "cd":
-			var dir = args[0]
-			if dir == "~" || dir == "" {
-				home, _ := os.UserHomeDir()
-				dir = home
-			}
-			err := os.Chdir(dir)
-			if err != nil {
-				fmt.Printf("cd: %s: No such file or directory\n", dir)
-			}
-
-		case "type":
-			if len(args) == 0 {
-				fmt.Println("type: missing argument")
+			continue
+		case '"':
+			if !singleQuoted {
+				if doubleQuoted {
+					got = argQuoted
+				}
+				doubleQuoted = !doubleQuoted
 				continue
 			}
-			arg := args[0]
-			if slices.Contains(builtins, arg) {
-				fmt.Printf("%s is a shell builtin\n", arg)
-			} else if path, err := exec.LookPath(arg); err == nil {
-				fmt.Printf("%s is %s\n", arg, path)
-			} else {
-				fmt.Printf("%s: not found\n", arg)
-			}
-
-		default:
-			if path, err := exec.LookPath(command); err == nil {
-				cmd := exec.Command(path, args...)
-				cmd.Args[0] = command
-				cmd.Stderr = os.Stderr
-				cmd.Stdout = stdout
-				out, err := cmd.CombinedOutput()
-				if err != nil {
-					continue
-					// fmt.Println(err.Error())
+		case '\'':
+			if !doubleQuoted {
+				if singleQuoted {
+					got = argQuoted
 				}
-				if slices.Contains(args, ">") || slices.Contains(args, "1>") {
-					fileName := args[len(args)-1]
-					fileContent := []byte(out)
-					err := os.WriteFile(fileName, fileContent, 0644)
-					if err != nil {
-						fmt.Println(err.Error())
-					}
-				} else {
-					fmt.Print(string(out))
-				}
-			} else {
-				fmt.Printf("%s: command not found\n", command)
+				singleQuoted = !singleQuoted
+				continue
 			}
-
 		}
+
+		got = argSingle
+		buf += string(r)
+	}
+
+	if got != argNo {
+		args = append(args, buf)
+	}
+
+	if escaped || singleQuoted || doubleQuoted {
+		return nil, errors.New("invalid command line string")
+	}
+	// fmt.Fprintf(os.Stderr, "args %s.\n", strings.Join(args, ","))
+	return args, nil
+}
+
+func main() {
+	for {
+		args := readCommand()
+		evalCommand(args)
 	}
 }
