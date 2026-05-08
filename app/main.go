@@ -103,11 +103,11 @@ func evalCommand(args []string) {
 
 	if len(args) > 2 && args[len(args)-2] == "2>" {
 		outputFile, err := os.Create(args[len(args)-1])
-		if err != nil {
-			stdout = *os.File(err)
+		if err == nil {
+			stderr = outputFile
+			defer stderr.Close()
 		}
-		defer outputFile.Close()
-		stdout = outputFile
+
 		args = args[:len(args)-2]
 	}
 
