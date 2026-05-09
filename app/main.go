@@ -89,21 +89,20 @@ func findMatches(line string) [][]rune {
 	return matches
 }
 
+type myCompleter struct{}
+
+func (c *myCompleter) Do(line []rune, pos int) ([][]rune, int) {
+	suggestions := findMatches(string(line[:pos]))
+	if len(suggestions) == 0 {
+		fmt.Printf("%c", 0x07)
+		return nil, 0
+	}
+	return suggestions, len(line[:pos])
+}
 
 func readCommand() []string {
 
-	var completer = readline.AutoCompleter(
-		readline.Do(line []rune, pos int) ([][]rune, int) {
-			suggestions := findMatches(string(line[:pos]))
-
-			if len(suggestions) == 0 {
-				// Optionnel : Tu peux décider de renvoyer une suggestion par défaut
-				// ou simplement retourner nil pour ne rien faire
-				return nil, 0x07
-			}
-
-			return suggestions, len(line)}
-	)
+	var completer readline.AutoCompleter = &myCompleter{}
 	cmd, err := readline.NewEx(&readline.Config{
 		Prompt:          "$ ",
 		InterruptPrompt: "^C",
