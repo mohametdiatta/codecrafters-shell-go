@@ -83,7 +83,7 @@ func findMatches(line string) [][]rune {
 		for _, f := range files {
 			info, _ := f.Info()
 			if !info.IsDir() && info.Mode().Perm()&0111 != 0 {
-				commands = append(commands, info.Name())
+				// commands = append(commands, info.Name())
 			}
 		}
 
