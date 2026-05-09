@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +8,8 @@ import (
 	"os/exec"
 	"slices"
 	"strings"
+
+	"github.com/chzyer/readline"
 )
 
 type Command struct {
@@ -74,16 +75,24 @@ func init() {
 }
 
 func readCommand() []string {
-	fmt.Fprint(os.Stdout, "$ ")
 
-	cmd, _, err := bufio.NewReader(os.Stdin).ReadLine()
-
+	var completer = readline.NewPrefixCompleter(
+		readline.PcItem("echo"),
+		readline.PcItem("exit"),
+	)
+	cmd, err := readline.NewEx(&readline.Config{
+		Prompt:          "$ ",
+		HistoryFile:     "/tmp/readline.tmp", // Chemin vers le fichier
+		InterruptPrompt: "^C",
+		AutoComplete:    completer,
+	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error reading input:", err)
 		os.Exit(1)
 	}
-
-	args, err := Parse(string(cmd))
+	defer cmd.Close()
+	line, _ := cmd.Readline()
+	args, err := Parse(string(line))
 
 	return args
 }
