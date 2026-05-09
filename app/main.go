@@ -75,14 +75,20 @@ func init() {
 }
 
 func findMatches(line string) [][]rune {
-	// Ta liste de commandes disponibles
-	commands := []string{"echo", "exit"}
+	pathEnv := os.Getenv("PATH")
+	executables := strings.Split(pathEnv, ":")
+	var commands = []string{"echo", "exit"}
+	for _, item := range executables {
+		parts := strings.Split(item, "/")
+		bin := parts[len(parts)-2]
+		if bin != "" {
+			commands = append(commands, bin)
+		}
+	}
 	var matches [][]rune
 
 	for _, cmd := range commands {
-		// Vérifie si la commande commence par la saisie actuelle
 		if strings.HasPrefix(cmd, line) {
-			// On convertit en []rune car c'est ce qu'attend readline
 			matches = append(matches, []rune(cmd[len(line):]+" "))
 		}
 	}
@@ -101,7 +107,6 @@ func (c *myCompleter) Do(line []rune, pos int) ([][]rune, int) {
 }
 
 func readCommand() []string {
-
 	var completer readline.AutoCompleter = &myCompleter{}
 	cmd, err := readline.NewEx(&readline.Config{
 		Prompt:          "$ ",
