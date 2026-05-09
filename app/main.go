@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -75,21 +76,17 @@ func init() {
 }
 
 func findMatches(line string) [][]rune {
-	pathEnv := os.Getenv("PATH")
-	executables := strings.Split(pathEnv, ":")
-	fmt.Println(executables)
 	var commands = []string{"echo", "exit"}
-	for _, item := range executables {
-		parts := strings.Split(item, "/")
-		var bin string
-		if parts[len(parts)-1] == "bin" {
-			bin = parts[len(parts)-2]
-		} else {
-			bin = parts[len(parts)-1]
+	paths := filepath.SplitList(os.Getenv("PATH"))
+	for _, path := range paths {
+		files, _ := os.ReadDir(path)
+		for _, f := range files {
+			info, _ := f.Info()
+			if !info.IsDir() && info.Mode().Perm()&0111 != 0 {
+				commands = append(commands, info.Name())
+			}
 		}
-		if bin != "" {
-			commands = append(commands, bin)
-		}
+
 	}
 	var matches [][]rune
 
