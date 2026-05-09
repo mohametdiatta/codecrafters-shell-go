@@ -77,6 +77,7 @@ func init() {
 func findMatches(line string) [][]rune {
 	pathEnv := os.Getenv("PATH")
 	executables := strings.Split(pathEnv, ":")
+	fmt.Println(executables)
 	var commands = []string{"echo", "exit"}
 	for _, item := range executables {
 		parts := strings.Split(item, "/")
