@@ -83,7 +83,7 @@ func findMatches(line string) [][]rune {
 		// Vérifie si la commande commence par la saisie actuelle
 		if strings.HasPrefix(cmd, line) {
 			// On convertit en []rune car c'est ce qu'attend readline
-			matches = append(matches, []rune(cmd[len(line):]))
+			matches = append(matches, []rune(cmd[len(line):]+" "))
 		}
 	}
 	return matches
