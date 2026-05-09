@@ -81,7 +81,12 @@ func findMatches(line string) [][]rune {
 	var commands = []string{"echo", "exit"}
 	for _, item := range executables {
 		parts := strings.Split(item, "/")
-		bin := parts[len(parts)-2]
+		var bin string
+		if parts[len(parts)-1] == "bin" {
+			bin = parts[len(parts)-2]
+		} else {
+			bin = parts[len(parts)-1]
+		}
 		if bin != "" {
 			commands = append(commands, bin)
 		}
