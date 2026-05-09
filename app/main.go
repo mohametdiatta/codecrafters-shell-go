@@ -82,7 +82,6 @@ func readCommand() []string {
 	)
 	cmd, err := readline.NewEx(&readline.Config{
 		Prompt:          "$ ",
-		HistoryFile:     "/tmp/readline.tmp", // Chemin vers le fichier
 		InterruptPrompt: "^C",
 		AutoComplete:    completer,
 	})
