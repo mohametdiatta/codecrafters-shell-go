@@ -74,11 +74,35 @@ func init() {
 	}
 }
 
+func findMatches(line string) [][]rune {
+	// Ta liste de commandes disponibles
+	commands := []string{"echo", "exit"}
+	var matches [][]rune
+
+	for _, cmd := range commands {
+		// Vérifie si la commande commence par la saisie actuelle
+		if strings.HasPrefix(cmd, line) {
+			// On convertit en []rune car c'est ce qu'attend readline
+			matches = append(matches, []rune(cmd[len(line):]))
+		}
+	}
+	return matches
+}
+
+
 func readCommand() []string {
 
-	var completer = readline.NewPrefixCompleter(
-		readline.PcItem("echo"),
-		readline.PcItem("exit"),
+	var completer = readline.AutoCompleter(
+		readline.Do(line []rune, pos int) ([][]rune, int) {
+			suggestions := findMatches(string(line[:pos]))
+
+			if len(suggestions) == 0 {
+				// Optionnel : Tu peux décider de renvoyer une suggestion par défaut
+				// ou simplement retourner nil pour ne rien faire
+				return nil, 0x07
+			}
+
+			return suggestions, len(line)}
 	)
 	cmd, err := readline.NewEx(&readline.Config{
 		Prompt:          "$ ",
