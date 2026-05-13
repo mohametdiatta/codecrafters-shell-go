@@ -76,6 +76,7 @@ func init() {
 }
 
 func findMatches(line string) [][]rune {
+	var matches [][]rune
 	var commands = []string{"echo", "exit"}
 	paths := filepath.SplitList(os.Getenv("PATH"))
 	for _, path := range paths {
@@ -86,9 +87,10 @@ func findMatches(line string) [][]rune {
 				commands = append(commands, info.Name())
 			}
 		}
-
 	}
-	var matches [][]rune
+
+	slices.Sort(commands)
+	commands = slices.Compact(commands)
 
 	for _, cmd := range commands {
 		if strings.HasPrefix(cmd, line) {
@@ -98,15 +100,53 @@ func findMatches(line string) [][]rune {
 	return matches
 }
 
-type myCompleter struct{}
+type myCompleter struct {
+	lastInput string
+	tabCount  int
+}
 
 func (c *myCompleter) Do(line []rune, pos int) ([][]rune, int) {
-	suggestions := findMatches(string(line[:pos]))
+	search := string(line[:pos])
+	if search == "" {
+		return nil, 0
+	}
+
+	suggestions := findMatches(search)
 	if len(suggestions) == 0 {
+		fmt.Printf("%c", 0x07)
+		c.lastInput = ""
+		c.tabCount = 0
+		return nil, 0
+	}
+
+	if len(suggestions) == 1 {
+		c.lastInput = ""
+		c.tabCount = 0
+		return suggestions, len(line[:pos])
+	}
+
+	if c.lastInput == search {
+		c.tabCount++
+	} else {
+		c.lastInput = search
+		c.tabCount = 1
+	}
+
+	if c.tabCount == 1 {
 		fmt.Printf("%c", 0x07)
 		return nil, 0
 	}
-	return suggestions, len(line[:pos])
+
+	c.tabCount = 0
+
+	names := make([]string, len(suggestions))
+	for i, s := range suggestions {
+		names[i] = search + strings.TrimSuffix(string(s), " ")
+	}
+	slices.Sort(names)
+
+	fmt.Printf("\n%s\n$ %s", strings.Join(names, "  "), search)
+	return nil, 0
 }
 
 func readCommand() []string {
@@ -246,6 +286,7 @@ func Parse(line string) ([]string, error) {
 				singleQuoted = !singleQuoted
 				continue
 			}
+
 		}
 
 		got = argSingle
