@@ -245,7 +245,10 @@ func Parse(line string) ([]string, error) {
 	for _, r := range line {
 		if escaped {
 			if doubleQuoted && !slices.Contains([]rune{'"', '\\', '$', '`', '\n'}, r) {
-				buf += string('\\')
+				buf += `\`
+			}
+			if !doubleQuoted && !singleQuoted {
+				buf += `\`
 			}
 			buf += string(r)
 			escaped = false
