@@ -248,7 +248,7 @@ func Parse(line string) ([]string, error) {
 				buf += `\`
 			}
 			if !doubleQuoted && !singleQuoted {
-				buf += `\`
+				buf += ``
 			}
 			buf += string(r)
 			escaped = false
